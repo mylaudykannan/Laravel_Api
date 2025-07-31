@@ -1,5 +1,7 @@
 //app\Http\Controllers\Api\Candidate\CandidateauthController.php
 use App\Mail\Candidate\VerificationMail;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 public function register(Request $request)
     {
         // Validation
