@@ -2,6 +2,7 @@
 use App\Mail\Candidate\VerificationMail;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 public function register(Request $request)
     {
         // Validation
@@ -20,7 +21,7 @@ public function register(Request $request)
             return response()->json(['status' => 'error', 'message' => 'The email is already registered.', 'code' => 422]);
         }
 
-        $emailOtp = generateNumericOtp();
+        $emailOtp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT); // always 6 digits
 
         // Create user
         $user = new User([
@@ -44,8 +45,8 @@ public function register(Request $request)
             'emailOtp' => $emailOtp
         ];
 
-        // Mail::to($user->email)->send(new VerificationMail($mailData));
-        SendEmailJob::dispatch($user->email, new VerificationMail($mailData));
+        Mail::to($user->email)->send(new VerificationMail($mailData));
+        //SendEmailJob::dispatch($user->email, new VerificationMail($mailData));
 
         return response()->json(['status' => 'success', 'message' => 'User registered successfully', 'code' => 201]);
     }
