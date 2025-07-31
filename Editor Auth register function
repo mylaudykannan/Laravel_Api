@@ -1,0 +1,49 @@
+//app\Http\Controllers\Api\Candidate\CandidateauthController.php
+use App\Mail\Candidate\VerificationMail;
+public function register(Request $request)
+    {
+        // Validation
+        $validator = validator($request->all(), [
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 422]);
+        }
+
+        // Check if user with the given email already exists
+        if (User::where('email', $request->email)->exists()) {
+            return response()->json(['status' => 'error', 'message' => 'The email is already registered.', 'code' => 422]);
+        }
+
+        $emailOtp = generateNumericOtp();
+
+        // Create user
+        $user = new User([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'emailotp' => $emailOtp
+        ]);
+
+        $user->save();
+
+        $user->assignRole('Editor');
+
+        // Send email verification link
+        // $user->sendEmailVerificationNotification();
+        $mailData = [
+            'title' => 'Editor Email Verification',
+            'body' => 'This is for testing email using smtp.',
+            'url' => URL('api/editor/email/verify/' . $user->id . '/' . sha1($user->getEmailForVerification())),
+            'email' => $request->email,
+            'emailOtp' => $emailOtp
+        ];
+
+        // Mail::to($user->email)->send(new VerificationMail($mailData));
+        SendEmailJob::dispatch($user->email, new VerificationMail($mailData));
+
+        return response()->json(['status' => 'success', 'message' => 'User registered successfully', 'code' => 201]);
+    }
