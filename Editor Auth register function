@@ -38,15 +38,28 @@ public function register(Request $request)
         // Send email verification link
         // $user->sendEmailVerificationNotification();
         $mailData = [
-            'title' => 'Editor Email Verification',
+            'title' => 'Candidate Email Verification',
             'body' => 'This is for testing email using smtp.',
             'url' => URL('api/editor/email/verify/' . $user->id . '/' . sha1($user->getEmailForVerification())),
             'email' => $request->email,
             'emailOtp' => $emailOtp
         ];
 
-        Mail::to($user->email)->send(new VerificationMail($mailData));
-        //SendEmailJob::dispatch($user->email, new VerificationMail($mailData));
+        // Mail::to($user->email)->send(new VerificationMail($mailData));
+
+        try {
+            Mail::to($user->email)->send(new VerificationMail($mailData));
+        } catch (\Exception $e) {
+            // Log the actual error for debugging
+            Log::error('Mail sending failed: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to send verification mail.',
+                'code' => 500, 
+            ], 500);
+        }
+        // SendEmailJob::dispatch($user->email, new VerificationMail($mailData));
 
         return response()->json(['status' => 'success', 'message' => 'User registered successfully', 'code' => 201]);
     }
