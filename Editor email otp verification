@@ -1,0 +1,33 @@
+//app\Http\Controllers\Api\Editor\EditorauthController.php
+public function emailOtpVerification(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'code' => 422]);
+        }
+
+        $email = $request->input('email');
+        $otp = $request->input('otp');
+
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            if ($user->hasVerifiedEmail()) {
+                return response()->json(['status' => 'error', 'message' => 'Email already verified', 'code' => 401]);
+            }
+            if ($user->emailotp != $otp) {
+                return response()->json(['status' => 'error', 'message' => 'Invalid OTP', 'code' => 401]);
+            }
+            $user->update([
+                'emailotp' => null
+            ]);
+            $user->markEmailAsVerified();
+            return response()->json(['status' => 'success', 'message' => 'Email verified successfully', 'code' => 401]);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'User not exist', 'code' => 401]);
+        }
+    }
