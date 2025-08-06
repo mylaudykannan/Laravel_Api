@@ -4,15 +4,26 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\App;
 
 class EnsureApiAuthenticated
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next): mixed
     {
-        if (!Auth::guard('sanctum')->check()) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthenticated', 'code' => 401]);
+        // Manually run 'auth:sanctum' middleware (Authenticate middleware)
+        $middleware = App::make(\Illuminate\Auth\Middleware\Authenticate::class);
+
+        try {
+            $response = $middleware->handle($request, function ($request) {
+                // Continue to the next middleware
+                return null;
+            }, 'sanctum'); // 'sanctum' guard
+        } catch (\Illuminate\Auth\AuthenticationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthenticated',
+                'code' => 401
+            ], 401);
         }
 
         return $next($request);
