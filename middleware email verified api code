@@ -17,7 +17,7 @@ class EmailApiVerified
     public function handle(Request $request, Closure $next): Response
     {
         $user = Auth::user();
-        if($user->email_verified_at==NULL){
+        if(is_null($user->email_verified_at)){
             return response()->json(['status' => 'error', 'message' => 'Email not verified', 'code' => 101]);
         }
         return $next($request);
