@@ -1,0 +1,6 @@
+public function show()
+    {
+        $user = User::find(auth()->id());
+
+        return response()->json(['status' => 'success', 'data' => $user]);
+    }
