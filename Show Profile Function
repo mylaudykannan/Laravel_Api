@@ -1,3 +1,4 @@
+//duplicated already added code in https://github.com/mylaudykannan/Laravel_Api/blob/aee6f4b67252518cba5933a0169dea962415f2d0/Code%20for%20api%20profile%20view%20function
 public function show()
     {
         $user = User::find(auth()->id());
