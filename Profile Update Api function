@@ -1,0 +1,68 @@
+//add column profile_image before this
+public function update(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // return response()->json(['status' => 'success', 'data' => $user]);
+
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+
+            // Password is optional
+            'password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+
+            // Image is optional
+            'profile_image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
+        ]);
+
+
+        // Update basic profile fields
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+
+
+        // Change password
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+
+        // Upload profile image
+        if ($request->hasFile('profile_image')) {
+
+            $profile_image = $request->file('profile_image');
+
+            $fileName = $profile_image->getClientOriginalName() . time();
+
+            $profile_image_name = $fileName . '.' . $profile_image->getClientOriginalExtension();
+            $destinationPath = public_path('/profile_images');
+            $profile_image->move($destinationPath, $profile_image_name);
+
+            $user->profile_image = $profile_image_name;
+        }
+
+        $user->save();
+
+        $user->refresh();
+
+        return response()->json(['status' => 'success', 'data' => $user]);
+    }
